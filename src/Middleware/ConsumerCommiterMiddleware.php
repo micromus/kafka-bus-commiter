@@ -30,6 +30,8 @@ final readonly class ConsumerCommiterMiddleware implements ConsumerPipelineMiddl
         $context = [
             'worker' => $message->workerName(),
             'msg_id' => $message->msgId(),
+            'partition' => $message->original()->partition,
+            'offset' => $message->original()->offset,
         ];
 
         $attempt = $this->consumerMessageRepository
