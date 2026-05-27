@@ -1,4 +1,4 @@
-name: PHP Code Style
+name: code-style
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           extensions: rdkafka
 
       - name: Install composer dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run PHPCs
         run: ./vendor/bin/php-cs-fixer fix --config .php-cs-fixer.php --dry-run

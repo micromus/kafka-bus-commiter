@@ -1,9 +1,10 @@
-# Kafka Bus Repeater for PHP
+# Kafka Bus Commiter for PHP
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/micromus/kafka-bus-repeater.svg?style=flat-square)](https://packagist.org/packages/micromus/kafka-bus-repeater)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-repeater/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/micromus/kafka-bus-repeater/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-repeater/php-code-style.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/micromus/kafka-bus-repeater/actions?query=workflow%3A"PHP+Code+Style"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/micromus/kafka-bus-repeater.svg?style=flat-square)](https://packagist.org/packages/micromus/kafka-bus-repeater)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/micromus/kafka-bus-commiter.svg?style=flat-square)](https://packagist.org/packages/micromus/kafka-bus-commiter)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-commiter/run-tests.yml?branch=1.x&label=tests&style=flat-square)](https://github.com/micromus/kafka-bus-commiter/actions?query=workflow%3Arun-tests+branch%3A1.x)
+[![GitHub Code Style](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-commiter/php-code-style.yml?branch=1.x&label=code-style&style=flat-square)](https://github.com/micromus/kafka-bus-commiter/actions?query=workflow%3Acode-style+branch%3A1.x)
+[![GitHub PHPStan](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-commiter/phpstan.yml?branch=1.x&label=phpstan&style=flat-square)](https://github.com/micromus/kafka-bus-commiter/actions?query=workflow%3Aphpstan+branch%3A1.x)
+[![Total Downloads](https://img.shields.io/packagist/dt/micromus/kafka-bus-commiter.svg?style=flat-square)](https://packagist.org/packages/micromus/kafka-bus-commiter)
 
 This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
 
@@ -12,14 +13,13 @@ This is where your description should go. Limit it to a paragraph or two. Consid
 You can install the package via composer:
 
 ```bash
-composer require micromus/kafka-bus-repeater
+composer require micromus/kafka-bus-commiter
 ```
 
 ## Usage
 
 ```php
-$kafkaBus = new Micromus\KafkaBus();
-echo $kafkaBus->echoPhrase('Hello, Micromus!');
+
 ```
 
 ## Testing
@@ -42,7 +42,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [kEERill](https://github.com/kEERill)
+- [Kirill Popkov](https://github.com/popkovkirill)
 - [All Contributors](../../contributors)
 
 ## License
