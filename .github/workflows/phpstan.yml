@@ -1,4 +1,4 @@
-name: PHPStan
+name: phpstan
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
           extensions: rdkafka
 
       - name: Install composer dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run PHPStan
         run: ./vendor/bin/phpstan --error-format=github

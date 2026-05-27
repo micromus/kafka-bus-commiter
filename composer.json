@@ -1,12 +1,12 @@
 {
-    "name": "micromus/kafka-bus-repeater",
+    "name": "micromus/kafka-bus-commiter",
     "description": "This is my package kafka-bus-repeater",
     "keywords": [
         "Micromus",
         "kafka-bus",
         "Outbox"
     ],
-    "homepage": "https://github.com/micromus/kafka-bus-repeater",
+    "homepage": "https://github.com/micromus/kafka-bus-commiter",
     "license": "MIT",
     "authors": [
         {
@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "micromus/kafka-bus": "^0.6.7"
+        "micromus/kafka-bus": "^1.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.64",
@@ -30,18 +30,19 @@
     },
     "autoload": {
         "psr-4": {
-            "Micromus\\KafkaBusRepeater\\": "src/"
+            "Micromus\\KafkaBusCommiter\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Micromus\\KafkaBusRepeater\\Tests\\": "tests/"
+            "Micromus\\KafkaBusCommiter\\Tests\\": "tests/"
         }
     },
     "scripts": {
         "analyse": "vendor/bin/phpstan analyse",
         "format": "vendor/bin/php-cs-fixer fix --config .php-cs-fixer.php",
         "test": "vendor/bin/pest",
+        "test-ci": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage"
     },
     "config": {
