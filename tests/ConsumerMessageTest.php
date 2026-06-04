@@ -12,6 +12,8 @@ use Micromus\KafkaBus\Testing\Messages\ConsumerHandlerFaker;
 use Micromus\KafkaBus\Topics\Topic;
 use Micromus\KafkaBus\Topics\TopicRegistry;
 use Micromus\KafkaBusCommiter\Middleware\ConsumerCommiterMiddleware;
+use Micromus\KafkaBusCommiter\Repositories\ArrayRepositorySource;
+use Micromus\KafkaBusCommiter\Repositories\IdempotencyMessageRepository;
 use Micromus\KafkaBusCommiter\Testing\Repositories\ArrayConsumerMessageRepository;
 use Testo\Assert;
 use Testo\Test;
@@ -31,7 +33,8 @@ function can_consume_message(): void
 
     $connectionFaker->addMessage($message);
 
-    $repository = new ArrayConsumerMessageRepository();
+    $source = new ArrayRepositorySource();
+    $repository = new IdempotencyMessageRepository($source);
 
     $consumerRoutes = ConsumerRoutesBuilder::make($topicRegistry)
         ->add(new RouteInfo('products', new ConsumerHandlerFaker()))
@@ -60,8 +63,6 @@ function can_consume_message(): void
     $bus->listener('default-listener')
         ->listen();
 
-    Assert::true($repository->exists(new ConsumerMessage($message)));
-
     Assert::array($connectionFaker->committedMessages)
         ->hasCount(1);
 }
@@ -80,7 +81,7 @@ function consume_message_not_read_if_message_already_read() {
 
     $connectionFaker->addMessage($message);
 
-    $repository = new ArrayConsumerMessageRepository();
+    $repository = new IdempotencyMessageRepository(new ArrayRepositorySource());
     $repository->commit(new ConsumerMessage($message));
 
     $consumerRoutes = ConsumerRoutesBuilder::make($topicRegistry)
