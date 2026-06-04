@@ -32,7 +32,7 @@ final class ArrayRepositorySource implements RepositorySourceInterface
         $attempt = $this->commited[$key] ?? null;
 
         $this->commited[$key] = $attempt == null
-            ? new Attempt($key, 1, new DateTimeImmutable())
-            : new Attempt($key, $attempt->number + 1, new DateTimeImmutable());
+            ? new Attempt($key, 1)
+            : new Attempt($key, $attempt->number + 1);
     }
 }
