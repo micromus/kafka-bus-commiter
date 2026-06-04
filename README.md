@@ -6,17 +6,18 @@
 [![GitHub PHPStan](https://img.shields.io/github/actions/workflow/status/micromus/kafka-bus-commiter/phpstan.yml?branch=1.x&label=phpstan&style=flat-square)](https://github.com/micromus/kafka-bus-commiter/actions?query=workflow%3Aphpstan+branch%3A1.x)
 [![Total Downloads](https://img.shields.io/packagist/dt/micromus/kafka-bus-commiter.svg?style=flat-square)](https://packagist.org/packages/micromus/kafka-bus-commiter)
 
-A middleware package for [micromus/kafka-bus](https://github.com/micromus/kafka-bus) that provides idempotent Kafka 
-message processing. It tracks which messages have already been handled, prevents duplicate processing, and allows 
+A middleware package for [micromus/kafka-bus](https://github.com/micromus/kafka-bus) that provides idempotent Kafka
+message processing. It tracks which messages have already been handled, prevents duplicate processing, and allows
 limiting the maximum number of read attempts.
 
 ## How It Works
 
-`ConsumerCommiterMiddleware` is inserted into the consumer pipeline and performs three checks before passing a message further:
+`ConsumerCommiterMiddleware` is inserted into the consumer pipeline and handles four outcomes:
 
-1. **Already committed** — if the message was already successfully processed (`commitedAt` is not null), the middleware logs a warning and stops the pipeline.
+1. **Already committed** — if the message was already successfully processed (`commitedAt` is not `null`), the middleware logs a warning and stops the pipeline.
 2. **Max attempts exceeded** — if `maxAttempt` is set and the attempt count has exceeded it, the middleware logs an error and stops the pipeline.
 3. **Successful processing** — if both checks pass, the message continues down the pipeline; once handled, `commit()` is called to record it as processed.
+4. **Handler error** — if downstream processing throws an exception, the middleware calls `failed()` and rethrows the exception.
 
 ## Installation
 
@@ -28,7 +29,7 @@ composer require micromus/kafka-bus-commiter
 
 ### Basic Example
 
-Implement `ConsumerMessageRepositoryInterface` to persist message state (e.g. in a database or Redis), then pass the 
+Implement `RepositorySourceInterface` to persist message state (for example in a database or Redis), then pass the
 middleware into your worker options:
 
 ```php
@@ -64,58 +65,56 @@ $workerRegistry = (new Bus\Listeners\Workers\MemoryWorkerRegistry())
 
 ```php
 new ConsumerCommiterMiddleware(
-    consumerMessageRepository: $repository, // required
-    logger: $logger,                         // PSR-3 logger, defaults to NullLogger
-    maxAttempt: 3,                           // max attempts, -1 = unlimited
+    repository: $repository, // required
+    logger: $logger,         // PSR-3 logger, defaults to NullLogger
+    maxAttempt: 3,           // max attempts, -1 = unlimited
 )
 ```
 
-| Parameter                   | Type                                 | Default      | Description                                                 |
-|-----------------------------|--------------------------------------|--------------|-------------------------------------------------------------|
-| `consumerMessageRepository` | `ConsumerMessageRepositoryInterface` | —            | Storage for message state                                   |
-| `logger`                    | `LoggerInterface`                    | `NullLogger` | PSR-3 compatible logger                                     |
-| `maxAttempt`                | `int`                                | `-1`         | Maximum number of processing attempts. `-1` means unlimited |
+| Parameter    | Type                                 | Default      | Description                                                 |
+|--------------|--------------------------------------|--------------|-------------------------------------------------------------|
+| `repository` | `RepositorySourceInterface`          | —            | Storage for message state                                   |
+| `logger`     | `LoggerInterface`                    | `NullLogger` | PSR-3 compatible logger                                     |
+| `maxAttempt` | `int`                                | `-1`         | Maximum number of processing attempts. `-1` means unlimited |
 
 ### Implementing the Repository
 
-You need to provide your own implementation of `ConsumerMessageRepositoryInterface`:
+You need to provide your own implementation of `RepositorySourceInterface`:
 
 ```php
-use Micromus\KafkaBus\Interfaces\Consumers\Messages\ConsumerMessageInterface;
 use Micromus\KafkaBusCommiter\Attempt;
-use Micromus\KafkaBusCommiter\Interfaces\ConsumerMessageRepositoryInterface;
+use Micromus\KafkaBusCommiter\Interfaces\RepositorySourceInterface;
  
-class DatabaseConsumerMessageRepository implements ConsumerMessageRepositoryInterface
+class DatabaseConsumerMessageRepository implements RepositorySourceInterface
 {
     /**
-     * Returns the current attempt for a given message.
-     * Return Attempt(number: 1) if this is the first time the message is seen.
-     * Return Attempt with a non-null commitedAt if it was already committed.
+     * Returns the current attempt for a given key.
      */
-    public function attempt(ConsumerMessageInterface $message): Attempt
+    public function get(string $key): ?Attempt
     {
         // ...
     }
- 
+
     /**
-     * Marks the message as successfully processed.
+     * Increments the number of failed read attempts for a key.
      */
-    public function commit(ConsumerMessageInterface $message): void
+    public function increment(string $key): void
     {
         // ...
     }
- 
+
     /**
-     * Returns true if a record for this message already exists in storage.
+     * Marks the message key as successfully processed.
      */
-    public function exists(ConsumerMessageInterface $message): bool
+    public function commit(string $key): void
     {
         // ...
     }
 }
 ```
 
-The message identifier is available via `$message->msgId()`.
+The middleware reads/writes processing state through `RepositorySourceInterface`.
+If you need key derivation from message data, use `IdempotencyMessageRepository` as an adapter that maps `ConsumerMessageInterface` to repository keys.
 
 
 ## Testing
