@@ -2,6 +2,14 @@
 
 All notable changes to `kafka-bus-repeater` will be documented in this file.
 
+## v1.1.0 - 2026-06-04
+
+### What's Changed
+
+* refactor: Переработан механизм защиты от двойного чтения и введен клю… by @popkovkirill in https://github.com/micromus/kafka-bus-commiter/pull/3
+
+**Full Changelog**: https://github.com/micromus/kafka-bus-commiter/compare/v1.0.0...v1.1.0
+
 ## v1.0.0 - 2026-05-27
 
 ### What's Changed
