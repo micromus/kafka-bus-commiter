@@ -54,7 +54,7 @@ $workerRegistry = (new Bus\Listeners\Workers\MemoryWorkerRegistry())
             routes: $consumerRoutes,
             options: new Bus\Listeners\Workers\Options(
                 middleware: [
-                    new ConsumerCommiterMiddleware(new YourMessageRepository())
+                    new ConsumerCommiterMiddleware(new NativeMessageRepository(new DatabaseRepositorySource))
                 ]
             )
         )
@@ -85,7 +85,7 @@ You need to provide your own implementation of `RepositorySourceInterface`:
 use Micromus\KafkaBusCommiter\Attempt;
 use Micromus\KafkaBusCommiter\Interfaces\RepositorySourceInterface;
  
-class DatabaseConsumerMessageRepository implements RepositorySourceInterface
+class DatabaseRepositorySource implements RepositorySourceInterface
 {
     /**
      * Returns the current attempt for a given key.
@@ -115,6 +115,89 @@ class DatabaseConsumerMessageRepository implements RepositorySourceInterface
 
 The middleware reads/writes processing state through `RepositorySourceInterface`.
 If you need key derivation from message data, use `IdempotencyMessageRepository` as an adapter that maps `ConsumerMessageInterface` to repository keys.
+
+## Idempotency Keys
+
+Out of the box the consumer uses Kafka's `msgId()` (a combination of topic, partition and offset) as the storage key.
+That works as long as the same physical message is never replayed under a different offset. As soon as you have
+retries, producer-side resends, or cross-cluster mirroring, the same logical event can arrive with a different
+`msgId()` and slip past the duplicate check.
+
+An **idempotency key** is a stable identifier that the producer attaches to a message so the consumer can recognize
+duplicates regardless of where or how they arrive. This package transports the key through the
+`x-idempotency-key` Kafka header (`IdempotencyMessageRepository::HEADER_NAME`).
+
+### Producing: `HasIdempotency` + `ProducerIdempotencyMiddleware`
+
+On the producer side you mark your message class with the `HasIdempotency` interface and return the stable key.
+The `ProducerIdempotencyMiddleware` reads that key and writes it into the `x-idempotency-key` header before the
+message hits the broker.
+
+```php
+use Micromus\KafkaBus\Interfaces\Producers\Messages\ProducerMessageInterface;
+use Micromus\KafkaBusCommiter\Interfaces\HasIdempotency;
+
+final readonly class ProductCreated implements ProducerMessageInterface, HasIdempotency
+{
+    public function __construct(
+        private string $productId,
+        private string $payload,
+    ) {
+    }
+
+    public function toPayload(): string
+    {
+        return $this->payload;
+    }
+
+    public function getIdempotencyKey(): string
+    {
+        return $this->productId;
+    }
+}
+```
+
+Wire the middleware into the publisher route for that message class:
+
+```php
+use Micromus\KafkaBus\Bus\Publishers\Router\Options;
+use Micromus\KafkaBus\Bus\Publishers\Router\PublisherRoutesBuilder;
+use Micromus\KafkaBusCommiter\Middleware\ProducerIdempotencyMiddleware;
+
+$publisherRoutes = PublisherRoutesBuilder::make($topicRegistry)
+    ->add(
+        ProductCreated::class,
+        'products',
+        new Options(middleware: [new ProducerIdempotencyMiddleware()])
+    )
+    ->build();
+```
+
+Middleware is registered per publisher route, so you opt individual message classes into the header. Messages
+that do not implement `HasIdempotency` pass through the middleware untouched — no header is added.
+
+### Consuming: `IdempotencyMessageRepository`
+
+On the consumer side, plug `IdempotencyMessageRepository` into `ConsumerCommiterMiddleware`. It reads the
+`x-idempotency-key` header and builds the storage key as `"{header}-{topicName}"`, so the same idempotency key
+in two different topics is still treated as two distinct events. If the header is missing, it falls back to
+`msgId()` so legacy producers keep working.
+
+```php
+use Micromus\KafkaBusCommiter\Middleware\ConsumerCommiterMiddleware;
+use Micromus\KafkaBusCommiter\Repositories\IdempotencyMessageRepository;
+
+$repository = new IdempotencyMessageRepository(new DatabaseRepositorySource());
+
+new ConsumerCommiterMiddleware($repository, maxAttempt: 3);
+```
+
+### Picking a key
+
+Pick something that uniquely identifies the **business event**, not the transport. Good choices are an aggregate
+id plus a version (`order-42-v3`), an outbox row id, or any value the upstream system already treats as unique.
+Avoid values that change on retry (timestamps, random UUIDs generated per send attempt) — they defeat the whole
+mechanism.
 
 
 ## Testing
