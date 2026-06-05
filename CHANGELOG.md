@@ -2,6 +2,14 @@
 
 All notable changes to `kafka-bus-repeater` will be documented in this file.
 
+## v1.1.2 - 2026-06-05
+
+### What's Changed
+
+* add: Добавлены тесты и актуализирована документация by @popkovkirill in https://github.com/micromus/kafka-bus-commiter/pull/5
+
+**Full Changelog**: https://github.com/micromus/kafka-bus-commiter/compare/v1.1.1...v1.1.2
+
 ## v1.1.1 - 2026-06-04
 
 ### What's Changed
