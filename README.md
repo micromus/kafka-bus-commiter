@@ -54,7 +54,7 @@ $workerRegistry = (new Bus\Listeners\Workers\MemoryWorkerRegistry())
             routes: $consumerRoutes,
             options: new Bus\Listeners\Workers\Options(
                 middleware: [
-                    new ConsumerCommiterMiddleware(new YourMessageRepository())
+                    new ConsumerCommiterMiddleware(new NativeMessageRepository(new DatabaseRepositorySource))
                 ]
             )
         )
@@ -85,7 +85,7 @@ You need to provide your own implementation of `RepositorySourceInterface`:
 use Micromus\KafkaBusCommiter\Attempt;
 use Micromus\KafkaBusCommiter\Interfaces\RepositorySourceInterface;
  
-class DatabaseConsumerMessageRepository implements RepositorySourceInterface
+class DatabaseRepositorySource implements RepositorySourceInterface
 {
     /**
      * Returns the current attempt for a given key.
@@ -187,7 +187,7 @@ in two different topics is still treated as two distinct events. If the header i
 use Micromus\KafkaBusCommiter\Middleware\ConsumerCommiterMiddleware;
 use Micromus\KafkaBusCommiter\Repositories\IdempotencyMessageRepository;
 
-$repository = new IdempotencyMessageRepository(new YourRepositorySource());
+$repository = new IdempotencyMessageRepository(new DatabaseRepositorySource());
 
 new ConsumerCommiterMiddleware($repository, maxAttempt: 3);
 ```
